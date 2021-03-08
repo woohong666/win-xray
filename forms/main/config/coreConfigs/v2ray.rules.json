@@ -1,0 +1,164 @@
+{
+    "inbounds": [ // 入站节点，也就是本地代理端口配置
+        {
+            "listen": "127.0.0.1", // 本机监听IP，允许局域网时需要设为 "0.0.0,0"
+            "port": 1081, // 本机 SOCKS 代理端口，设为 0 时由 winXray 重置为合适的默认端口
+            "protocol": "socks", // 入站代理协议
+            "settings": {
+                "auth": "noauth",
+                "udp": true
+            },
+            "sniffing": {
+                "destOverride": [
+                    "http",
+                    "tls"
+                ],
+                "enabled": true
+            },
+            "tag": "proxy" // 名称为"proxy"的节点由 winXray 自动维护并添加用户配置
+        },
+        {
+            "listen": "127.0.0.1",
+            "port": 1082,
+            "protocol": "http",
+            "settings": {},
+            "sniffing": {
+                "destOverride": [
+                    "http",
+                    "tls"
+                ],
+                "enabled": true
+            },
+            "tag": "http_proxy" // 名称为"http_proxy"的入站节点由 winXray 自动维护并添加用户配置
+        }
+    ],
+    "log": {
+        "access": "",
+        "error": "",
+        "loglevel": "warning"
+    },
+    "outbounds": [
+        {
+            "tag": "proxy" // 作为第一个节点表示默认走代理，名称为"proxy"的节点由 winXray 自动维护并添加用户配置
+        },
+        {
+            "protocol": "dns",
+            "tag": "Dns-Out"
+        },
+        {
+            "protocol": "freedom", // 直连出站节点
+            "tag": "Direct", // 如果移动到第一个节点表示默认走直连
+            "settings": {
+                "domainStrategy": "UseIPv4"
+            }
+        },
+        {
+            "protocol": "blackhole",
+            "tag": "Reject",
+            "settings": {
+                "response": {
+                    "type": "http"
+                }
+            }
+        }
+    ],
+    "dns": {
+        "hosts": {
+            "dns.google": "8.8.8.8",
+            "doh.pub": "119.29.29.29"
+        },
+        "servers": [
+            "https://dns.google/dns-query",
+            {
+                "address": "https+local://223.5.5.5/dns-query",
+                "domains": [
+                    "geosite:cn",
+                    "geosite:icloud"
+                ],
+                "expectIPs": [
+                    "geoip:cn"
+                ]
+            },
+            {
+                "address": "https://1.1.1.1/dns-query",
+                "domains": [
+                    "geosite:geolocation-!cn"
+                ]
+            }
+        ]
+    },
+    "routing": {
+        "domainStrategy": "IPIfNonMatch",
+        "rules": [
+            {
+                "type": "field",
+                "outboundTag": "Direct",
+                "protocol": [
+                    "bittorrent"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "Dns-Out",
+                "inboundTag": [
+                    "Socks-In",
+                    "Http-In"
+                ],
+                "network": "udp",
+                "port": 53
+            },
+            {
+                "type": "field",
+                "outboundTag": "Reject",
+                "domain": [
+                    "geosite:category-ads-all",
+                    "geosite:win-spy"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "proxy",
+                "domain": [
+                    "full:www.icloud.com",
+                    "domain:icloud-content.com"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "Direct",
+                "domain": [
+                    "geosite:tld-cn",
+                    "geosite:icloud"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "proxy",
+                "domain": [
+                    "geosite:geolocation-!cn"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "Direct",
+                "domain": [
+                    "geosite:cn",
+                    "geosite:private"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "Direct",
+                "ip": [
+                    "geoip:cn",
+                    "geoip:private"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "proxy",
+                "network": "tcp,udp"
+            }
+        ]
+    }
+}

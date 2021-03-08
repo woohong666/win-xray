@@ -1,0 +1,71 @@
+{
+    "inbounds": [ // 入站节点，也就是本地代理端口配置
+        {
+            "listen": "127.0.0.1", // 本机 SOCKS 代理端口，设为 0 时由 winXray 重置为合适的默认端口
+            "port": 0, // 本机 SOCKS 代理端口，设为 0 时由 winXray 重置为合适的默认端口
+            "protocol": "socks", // 入站代理协议
+            "settings": {
+                "auth": "noauth",
+                "udp": true
+            },
+            "sniffing": {
+                "destOverride": [
+                    "http",
+                    "tls"
+                ],
+                "enabled": true
+            },
+            "tag": "proxy" // 名称为"proxy"的节点由 winXray 自动维护并添加用户配置
+        },
+        {
+            "listen": "127.0.0.1",
+            "port": 0,
+            "protocol": "http",
+            "settings": {},
+            "sniffing": {
+                "destOverride": [
+                    "http",
+                    "tls"
+                ],
+                "enabled": true
+            },
+            "tag": "http_proxy" // 名称为"http_proxy"的入站节点由 winXray 自动维护并添加用户配置
+        }
+    ],
+    "log": {
+        "access": "",
+        "error": "",
+        "loglevel": "warning"
+    },
+    "outbounds": [
+        {
+            "tag": "proxy" // 名称为"proxy"的节点由 winXray 自动维护并添加用户配置
+        },
+        {
+            "protocol": "freedom",
+            "settings": {},
+            "tag": "direct"
+        },
+        {
+            "protocol": "blackhole",
+            "settings": {
+                "response": {
+                    "type": "http"
+                }
+            },
+            "tag": "block"
+        }
+    ],
+    "routing": {
+        "domainStrategy": "IPIfNonMatch",
+        "rules": [
+            {
+                "inboundTag": [
+                    "api"
+                ],
+                "outboundTag": "api",
+                "type": "field"
+            }
+        ]
+    }
+}
